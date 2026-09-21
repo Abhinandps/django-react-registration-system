@@ -20,103 +20,143 @@ This project is a production-ready, scalable **College Admission Online Registra
 
 ---
 
-## 2. System Design Architecture
+## 2. System Design Architecture (As-Built)
 
-The platform follows a layered, decoupled service-oriented architecture designed to scale independently under burst admission registration periods.
+The platform is engineered as a decoupled, full-stack application composed of an interactive React Single-Page Application (SPA) on the frontend communicating via REST APIs with a Django REST Framework (DRF) backend backed by a PostgreSQL database.
 
-### 2.1 High-Level Architecture Diagram
+### 2.1 As-Built System Architecture Diagram
 
 ```mermaid
 graph TB
-    subgraph ClientLayer ["Client Layer (Presentation)"]
-        UserBrowser["Applicant Browser (Mobile / Desktop)"]
-        AdminBrowser["Admissions Officer / Admin Console"]
+    subgraph ClientTier ["Client Tier (Browser)"]
+        ApplicantUser["Applicant (Mobile / Desktop)"]
+        AdmissionsStaff["Admissions Officer / Admin"]
     end
 
-    subgraph EdgeLayer ["Edge & Ingress Layer"]
-        CDN["CloudFront / Cloudflare CDN\n(Static Assets & Caching)"]
-        ReverseProxy["Nginx Ingress / Reverse Proxy\n(SSL Termination, Rate Limiting, 10MB Max Body)"]
+    subgraph FrontendApp ["Frontend Application Tier (localhost:5173)"]
+        ViteServer["Vite Dev Server (React 19 + Sass)"]
+        FormWizard["3-Step Admission Wizard Component\n(Personal Details -> Docs/Photo -> Location/Review)"]
+        DirectoryView["Public Applications Directory Component\n(Search, Coordinates, Status Filters)"]
+        AxiosClient["Axios HTTP Client (axiosClient.js)\nBase URL: http://localhost:8000/api"]
+        GeoAPI["HTML5 navigator.geolocation API\n(Browser GPS Coordinates)"]
     end
 
-    subgraph AppLayer ["Application Tier (Stateless)"]
-        ViteDev["Vite / React SPA Host"]
-        Gunicorn["Django Application Server (WSGI/ASGI via Gunicorn)"]
-        DRFEngine["Django REST Framework\n(Parsers, Serializers, Validators)"]
-        AdminModule["Django Admin Interface\n(Thumbnails, Verification, Maps)"]
+    subgraph BackendApp ["Backend Application Tier (localhost:8000)"]
+        DjangoServer["Django 5.2 Application Server"]
+        CORSMiddleware["django-cors-headers\n(Whitelist: localhost:5173)"]
+        DRFRoutes["Django REST Framework URL Router\n/api/applicants/ & /api/documents/"]
+        
+        subgraph Endpoints ["REST API Endpoints"]
+            SubmitEndpoint["POST /api/applicants/\n(MultiPartParser, File Validation, Atomic Commit)"]
+            ListEndpoint["GET /api/applicants/all/\n(Unpaginated Lightweight Text + Geolocation)"]
+            CheckEmailEndpoint["GET /api/applicants/check-email/\n(Real-time Email Availability Check)"]
+        end
+
+        SecurityPipeline["Strict File Validation Pipeline\n(Extension Whitelist, 2MB/5MB Limits, MIME Magic Bytes)"]
+        DjangoAdmin["Django Admin Console (/admin/)\n(Thumbnails, Inline Docs, Map Links)"]
     end
 
-    subgraph AsyncTier ["Asynchronous Processing Tier (Production Scalability)"]
-        MessageBroker["Redis Message Broker"]
-        CeleryWorker["Celery Background Workers\n(ClamAV Virus Scan, PDF Watermarking, Email Dispatch)"]
+    subgraph PersistenceTier ["Persistence & Storage Tier"]
+        PostgresDB[(PostgreSQL Database\ncollege_admissions\npsycopg3 Driver, ACID, UUID PKs)]
+        LocalMedia["Local Media Storage (backend/media/)\napplicants/photos/ & applicants/documents/"]
     end
 
-    subgraph DataStorageTier ["Storage & Persistence Tier"]
-        DB[(PostgreSQL Primary Database\nACID Transactions, UUIDs, B-Tree Indexes)]
-        BlobStorage["Object Storage (AWS S3 / Cloudflare R2)\nEncrypted Bucket for Photos & Marksheets"]
-    end
+    ApplicantUser -->|Loads UI| ViteServer
+    ViteServer --> FormWizard
+    ViteServer --> DirectoryView
+    FormWizard --> GeoAPI
+    FormWizard -->|Dispatches Form & Files| AxiosClient
+    DirectoryView -->|Fetches All Applications| AxiosClient
 
-    UserBrowser -->|HTTPS / REST API| ReverseProxy
-    AdminBrowser -->|HTTPS / Session Admin| ReverseProxy
-    ReverseProxy -->|Static Frontend| ViteDev
-    ReverseProxy -->|API Routing /api/*| Gunicorn
-    Gunicorn --> DRFEngine
-    Gunicorn --> AdminModule
-    DRFEngine -->|Atomic DB Writes| DB
-    DRFEngine -->|Store Files| BlobStorage
-    DRFEngine -.->|Enqueue Tasks| MessageBroker
-    MessageBroker --> CeleryWorker
-    CeleryWorker -->|Update Status| DB
-    CeleryWorker -->|Async Notifications| UserBrowser
+    AxiosClient -->|CORS Request| CORSMiddleware
+    CORSMiddleware --> DRFRoutes
+    DRFRoutes --> SubmitEndpoint
+    DRFRoutes --> ListEndpoint
+    DRFRoutes --> CheckEmailEndpoint
+
+    SubmitEndpoint --> SecurityPipeline
+    SecurityPipeline -->|Write Files| LocalMedia
+    SubmitEndpoint -->|transaction.atomic INSERT| PostgresDB
+    ListEndpoint -->|SELECT (ordered by -created_at)| PostgresDB
+    CheckEmailEndpoint -->|SELECT EXISTS| PostgresDB
+
+    AdmissionsStaff -->|Session Login| DjangoAdmin
+    DjangoAdmin --> PostgresDB
+    DjangoAdmin --> LocalMedia
 ```
 
 ---
 
-### 2.2 End-to-End Registration Flow (Sequence Diagram)
+### 2.2 End-to-End System Flows (Sequence Diagrams)
 
+#### Flow A: 3-Step Public Registration Flow
 ```mermaid
 sequenceDiagram
     autonumber
     actor Student as Applicant (Browser)
-    participant UI as React SPA (Vite + Sass)
-    participant API as Django DRF (/api/applicants/)
+    participant UI as React Frontend (localhost:5173)
+    participant API as Django Backend (localhost:8000)
     participant Validator as Strict File Validator
+    participant Media as Local Media Storage
     participant DB as PostgreSQL Database
-    participant Storage as File / Media Storage
 
-    Student->>UI: Fills Step 1 (Personal details: Name, Email, Phone, DOB)
+    Student->>UI: Fills Step 1 (Personal Details)
     UI->>API: GET /api/applicants/check-email/?email=...
-    API-->>UI: 200 OK (Email availability status)
-    
-    Student->>UI: Fills Step 2 (Uploads Photo, 10th & 12th Marksheets)
-    UI->>UI: Client validation (extensions, sizes < 2MB/5MB, live preview)
-    
-    Student->>UI: Triggers Step 3 (Captures Browser Geolocation)
+    API->>DB: Check email existence
+    DB-->>API: Not found
+    API-->>UI: 200 OK ({ available: true })
+
+    Student->>UI: Fills Step 2 (Selects Photo, 10th & 12th Marksheets)
+    UI->>UI: Instant client preview (image thumbnail / PDF icon, size validation)
+
+    Student->>UI: Step 3: Clicks "Detect My Location"
     UI->>Student: Requests navigator.geolocation.getCurrentPosition()
-    Student-->>UI: Grants permission; Lat/Lng captured
+    Student-->>UI: Permits GPS access; Lat/Lng captured
     
-    Student->>UI: Confirms Declaration & Clicks "Submit Application"
+    Student->>UI: Checks declaration & clicks "Submit Application"
     UI->>API: POST /api/applicants/ (multipart/form-data)
     
     activate API
-    API->>Validator: Inspect file extensions (.jpg, .png, .pdf)
-    API->>Validator: Inspect MIME magic headers (anti-spoofing)
+    API->>Validator: Validate file sizes (photo <= 2MB, docs <= 5MB)
+    API->>Validator: Check extensions (.jpg, .png, .pdf)
+    API->>Validator: Inspect MIME magic headers (%PDF, \x89PNG, \xff\xd8\xff)
     API->>Validator: Verify coordinate ranges (-90 to +90, -180 to +180)
-    
+
     alt Validation Failure
-        Validator-->>API: ValidationError (e.g., file too large / invalid magic bytes)
-        API-->>UI: 400 Bad Request (Formatted field-level errors)
-        UI-->>Student: Displays actionable error banners on affected step
-    else Validation Success
-        API->>DB: Begin Atomic Transaction
-        API->>Storage: Persist Photo (applicants/photos/<uuid>/photo.ext)
+        Validator-->>API: ValidationError
+        API-->>UI: 400 Bad Request (Formatted field errors)
+        UI-->>Student: Displays actionable error alerts
+    else Validation Succeeded
+        API->>DB: Begin transaction.atomic()
+        API->>Media: Write photo to media/applicants/photos/<uuid>/photo.ext
         API->>DB: INSERT INTO admissions_applicant (...)
-        API->>Storage: Persist 10th & 12th marksheets
-        API->>DB: INSERT INTO admissions_applicantdocument (FK -> applicant)
-        API->>DB: Commit Transaction
-        API-->>UI: 201 Created (application_number: "ADM-XXXXXX", full payload)
+        API->>Media: Write 10th & 12th marksheets to media/applicants/documents/
+        API->>DB: INSERT INTO admissions_applicantdocument (...)
+        API->>DB: Commit transaction
+        API-->>UI: 201 Created (application_number: "ADM-XXXXXX", full data)
         deactivate API
         UI-->>Student: Renders Success Screen with Application Reference ID & Print Option
     end
+```
+
+#### Flow B: Public Applications Directory Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Any Visitor / Applicant
+    participant UI as React Frontend (All Applications Tab)
+    participant API as Django Backend (/api/applicants/all/)
+    participant DB as PostgreSQL Database
+
+    User->>UI: Navigates to "All Applications" Tab
+    UI->>API: GET /api/applicants/all/
+    activate API
+    API->>DB: SELECT text fields & coordinates FROM admissions_applicant ORDER BY created_at DESC
+    DB-->>API: Result set (applicants records)
+    API->>API: Serialize via ApplicantListSerializer (excludes file payloads)
+    API-->>UI: 200 OK (JSON array with names, contacts, coordinates, status)
+    deactivate API
+    UI-->>User: Renders searchable table/cards with Google Maps coordinate links
 ```
 
 ---
@@ -170,7 +210,7 @@ erDiagram
 
 ---
 
-## 4. Scalability & High Availability Roadmap
+## 4. Production Scalability & Cloud Deployment Roadmap (Future Target Architecture)
 
 1. **Decoupled Asynchronous Tasks (Celery + Redis)**:
    - Offload heavy tasks (OCR of marksheet text, ClamAV anti-virus scanning, and automated welcome email with PDF acknowledgment receipts) to background Celery workers so HTTP requests respond within < 150ms.
