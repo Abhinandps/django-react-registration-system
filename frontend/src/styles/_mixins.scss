@@ -1,0 +1,111 @@
+@use 'variables' as *;
+
+// Media Query Mixins
+@mixin mobile {
+  @media (max-width: #{$bp-mobile}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: #{$bp-tablet}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$bp-desktop}) {
+    @content;
+  }
+}
+
+// Flexbox Helpers
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Card and Elevation
+@mixin card-surface {
+  background: $surface-card;
+  border-radius: $radius-lg;
+  border: 1px solid $border-light;
+  box-shadow: $shadow-md;
+  transition: box-shadow $transition-normal, border-color $transition-normal;
+}
+
+// Input Fields
+@mixin input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: $font-size-base;
+  font-family: inherit;
+  color: $text-primary;
+  background-color: $surface-card;
+  border: 1.5px solid $border-medium;
+  border-radius: $radius-md;
+  outline: none;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:hover {
+    border-color: $primary-500;
+  }
+
+  &:focus {
+    border-color: $primary-600;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  &.error {
+    border-color: $accent-rose;
+    background-color: #fffafa;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+  }
+
+  &:disabled {
+    background-color: $surface-muted;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+// Buttons
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: $radius-md;
+  cursor: pointer;
+  border: none;
+  transition: all $transition-fast;
+  text-decoration: none;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

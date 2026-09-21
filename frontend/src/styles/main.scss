@@ -1,0 +1,900 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'reset';
+
+// App Layout Structure
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 240px);
+}
+
+.portal-header {
+  background: $surface-card;
+  border-bottom: 1px solid $border-light;
+  padding: $spacing-4 0;
+  box-shadow: $shadow-sm;
+
+  .header-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 $spacing-6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: $spacing-3;
+
+      .brand-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, $primary-600, $primary-800);
+        border-radius: $radius-md;
+        @include flex-center;
+        color: white;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+      }
+
+      .brand-text {
+        h1 {
+          font-size: $font-size-xl;
+          font-weight: 700;
+          color: $text-primary;
+          letter-spacing: -0.02em;
+        }
+
+        p {
+          font-size: $font-size-xs;
+          color: $text-secondary;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .badge-session {
+      background: $primary-50;
+      color: $primary-700;
+      font-size: $font-size-xs;
+      font-weight: 600;
+      padding: $spacing-1 $spacing-3;
+      border-radius: $radius-full;
+      border: 1px solid $primary-200;
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: $spacing-8 auto;
+  padding: 0 $spacing-6;
+
+  @include mobile {
+    margin: $spacing-4 auto;
+    padding: 0 $spacing-3;
+  }
+}
+
+// Stepper Component
+.stepper-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-bottom: $spacing-8;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 48px;
+    right: 48px;
+    height: 3px;
+    background: $border-light;
+    z-index: 1;
+  }
+
+  .step-progress-bar {
+    position: absolute;
+    top: 24px;
+    left: 48px;
+    height: 3px;
+    background: $primary-600;
+    z-index: 2;
+    transition: width $transition-normal;
+  }
+
+  .step-item {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-2;
+    background: transparent;
+
+    .step-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: $surface-card;
+      border: 3px solid $border-medium;
+      color: $text-muted;
+      @include flex-center;
+      font-weight: 700;
+      font-size: $font-size-base;
+      transition: all $transition-normal;
+      box-shadow: $shadow-sm;
+    }
+
+    .step-label {
+      font-size: $font-size-xs;
+      font-weight: 600;
+      color: $text-secondary;
+      text-align: center;
+      transition: color $transition-normal;
+
+      @include mobile {
+        display: none;
+      }
+    }
+
+    &.active {
+      .step-circle {
+        border-color: $primary-600;
+        background: $primary-600;
+        color: white;
+        box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.2);
+      }
+      .step-label {
+        color: $primary-700;
+        font-weight: 700;
+      }
+    }
+
+    &.completed {
+      .step-circle {
+        border-color: $accent-emerald;
+        background: $accent-emerald;
+        color: white;
+      }
+      .step-label {
+        color: $text-primary;
+      }
+    }
+  }
+}
+
+// Wizard Form Card
+.wizard-card {
+  @include card-surface;
+  padding: $spacing-8;
+
+  @include mobile {
+    padding: $spacing-5;
+    border-radius: $radius-md;
+  }
+
+  .card-header {
+    margin-bottom: $spacing-6;
+    border-bottom: 1px solid $border-light;
+    padding-bottom: $spacing-4;
+
+    h2 {
+      font-size: $font-size-2xl;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    p {
+      color: $text-secondary;
+      font-size: $font-size-sm;
+      margin-top: $spacing-1;
+    }
+  }
+}
+
+// Form Layout Elements
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-5;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-4;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-group {
+  @include flex-column;
+  gap: $spacing-1;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+
+    .required-star {
+      color: $accent-rose;
+    }
+  }
+
+  .form-control {
+    @include input-field;
+  }
+
+  textarea.form-control {
+    resize: vertical;
+    min-height: 85px;
+  }
+
+  .field-hint {
+    font-size: $font-size-xs;
+    color: $text-muted;
+  }
+
+  .error-message {
+    font-size: $font-size-xs;
+    color: $accent-rose;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    font-weight: 500;
+  }
+}
+
+// File Upload Component
+.upload-dropzone {
+  border: 2px dashed $border-medium;
+  border-radius: $radius-md;
+  padding: $spacing-6;
+  text-align: center;
+  background-color: $bg-app;
+  cursor: pointer;
+  transition: all $transition-fast;
+  position: relative;
+
+  &:hover, &.drag-active {
+    border-color: $primary-600;
+    background-color: $primary-50;
+  }
+
+  &.has-file {
+    border-style: solid;
+    border-color: $accent-emerald;
+    background-color: $accent-emerald-light;
+  }
+
+  .file-input-hidden {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-prompt {
+    @include flex-column;
+    align-items: center;
+    gap: $spacing-2;
+
+    .upload-icon {
+      color: $primary-600;
+    }
+
+    .prompt-text {
+      font-size: $font-size-sm;
+      font-weight: 600;
+      color: $text-primary;
+
+      span {
+        color: $primary-600;
+        text-decoration: underline;
+      }
+    }
+
+    .format-hint {
+      font-size: $font-size-xs;
+      color: $text-muted;
+    }
+  }
+
+  .file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-4;
+
+    .preview-left {
+      display: flex;
+      align-items: center;
+      gap: $spacing-3;
+
+      .thumbnail-img {
+        width: 54px;
+        height: 54px;
+        object-fit: cover;
+        border-radius: $radius-sm;
+        border: 1px solid $border-medium;
+      }
+
+      .doc-icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: $radius-sm;
+        background: #e0e7ff;
+        color: $primary-700;
+        @include flex-center;
+      }
+
+      .file-meta {
+        text-align: left;
+
+        .file-name {
+          font-size: $font-size-sm;
+          font-weight: 600;
+          color: $text-primary;
+          max-width: 260px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .file-size {
+          font-size: $font-size-xs;
+          color: $text-secondary;
+        }
+      }
+    }
+
+    .btn-remove-file {
+      background: white;
+      border: 1px solid $border-medium;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      @include flex-center;
+      color: $accent-rose;
+      cursor: pointer;
+      transition: background $transition-fast;
+
+      &:hover {
+        background: $accent-rose-light;
+        border-color: $accent-rose;
+      }
+    }
+  }
+}
+
+// Geolocation Card
+.geo-container {
+  background: $surface-muted;
+  border: 1px solid $border-light;
+  border-radius: $radius-md;
+  padding: $spacing-5;
+  margin-top: $spacing-4;
+
+  .geo-header {
+    @include flex-between;
+    margin-bottom: $spacing-4;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $spacing-3;
+    }
+
+    h4 {
+      font-size: $font-size-base;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+    }
+  }
+
+  .geo-coords-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-4;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+
+    .coord-box {
+      background: $surface-card;
+      border: 1px solid $border-light;
+      border-radius: $radius-sm;
+      padding: $spacing-3;
+
+      .coord-label {
+        font-size: $font-size-xs;
+        color: $text-muted;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .coord-value {
+        font-size: $font-size-lg;
+        font-family: monospace;
+        font-weight: 700;
+        color: $text-primary;
+        margin-top: $spacing-1;
+      }
+    }
+  }
+}
+
+// Review Summary Table
+.review-section {
+  margin-bottom: $spacing-6;
+
+  .review-title {
+    font-size: $font-size-base;
+    font-weight: 700;
+    color: $primary-800;
+    border-bottom: 2px solid $primary-100;
+    padding-bottom: $spacing-2;
+    margin-bottom: $spacing-3;
+  }
+
+  .review-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-3;
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
+
+    .review-item {
+      .review-key {
+        font-size: $font-size-xs;
+        color: $text-muted;
+        font-weight: 600;
+      }
+
+      .review-val {
+        font-size: $font-size-sm;
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+  }
+}
+
+// Button Actions Footer
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-8;
+  padding-top: $spacing-5;
+  border-top: 1px solid $border-light;
+
+  .btn-primary {
+    @include button-base;
+    background-color: $primary-600;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: $primary-700;
+      box-shadow: $shadow-md;
+    }
+  }
+
+  .btn-secondary {
+    @include button-base;
+    background-color: $surface-card;
+    color: $text-secondary;
+    border: 1px solid $border-medium;
+
+    &:hover:not(:disabled) {
+      background-color: $surface-muted;
+      color: $text-primary;
+    }
+  }
+
+  .btn-accent {
+    @include button-base;
+    background-color: $accent-emerald;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: #059669;
+      box-shadow: $shadow-md;
+    }
+  }
+}
+
+// Status Alert Banners
+.status-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-5;
+  font-size: $font-size-sm;
+
+  &.error {
+    background: $accent-rose-light;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+  }
+
+  &.success {
+    background: $accent-emerald-light;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+
+  &.info {
+    background: $primary-50;
+    border: 1px solid $primary-200;
+    color: $primary-800;
+  }
+
+  &.warning {
+    background: $accent-amber-light;
+    border: 1px solid #fde68a;
+    color: #92400e;
+  }
+}
+
+// Success Screen Modal / Card
+.success-card {
+  text-align: center;
+  padding: $spacing-10 $spacing-6;
+
+  .success-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: $accent-emerald-light;
+    color: $accent-emerald;
+    @include flex-center;
+    margin: 0 auto $spacing-5 auto;
+    border: 2px solid #a7f3d0;
+  }
+
+  h2 {
+    font-size: $font-size-3xl;
+    font-weight: 800;
+    color: $text-primary;
+  }
+
+  .application-ref-badge {
+    display: inline-block;
+    background: $primary-50;
+    border: 1.5px solid $primary-200;
+    color: $primary-800;
+    font-size: $font-size-xl;
+    font-weight: 700;
+    padding: $spacing-2 $spacing-6;
+    border-radius: $radius-md;
+    margin: $spacing-4 0;
+    font-family: monospace;
+    letter-spacing: 0.05em;
+  }
+
+  p {
+    color: $text-secondary;
+    max-width: 500px;
+    margin: 0 auto $spacing-6 auto;
+    font-size: $font-size-base;
+  }
+}
+
+// Navigation Tabs in Header
+.header-nav-tabs {
+  display: flex;
+  gap: $spacing-2;
+
+  .nav-tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: $text-secondary;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    padding: $spacing-2 $spacing-4;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background: $surface-muted;
+      color: $text-primary;
+    }
+
+    &.active {
+      background: $primary-50;
+      color: $primary-700;
+      border-color: $primary-200;
+    }
+  }
+}
+
+// Applicant List Directory
+.applicant-list-card {
+  padding: $spacing-6;
+
+  .list-toolbar {
+    margin-bottom: $spacing-6;
+    border-bottom: 1px solid $border-light;
+    padding-bottom: $spacing-5;
+
+    .toolbar-header {
+      @include flex-between;
+      margin-bottom: $spacing-4;
+
+      @include mobile {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: $spacing-3;
+      }
+
+      h2 {
+        font-size: $font-size-2xl;
+        font-weight: 700;
+        color: $text-primary;
+      }
+
+      p {
+        font-size: $font-size-sm;
+        color: $text-secondary;
+        margin-top: $spacing-1;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: $spacing-2;
+      }
+    }
+
+    .search-bar-row {
+      display: flex;
+      align-items: center;
+      gap: $spacing-4;
+
+      .search-input-wrapper {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        .search-icon {
+          position: absolute;
+          left: 12px;
+          color: $text-muted;
+        }
+
+        .search-input {
+          @include input-field;
+          padding-left: 38px;
+        }
+      }
+
+      .applicant-count-pill {
+        background: $surface-muted;
+        border: 1px solid $border-medium;
+        color: $text-primary;
+        font-size: $font-size-xs;
+        font-weight: 700;
+        padding: $spacing-2 $spacing-4;
+        border-radius: $radius-full;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .table-responsive-wrapper {
+    overflow-x: auto;
+    border: 1px solid $border-light;
+    border-radius: $radius-md;
+  }
+
+  .applicants-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: $font-size-sm;
+
+    th {
+      background: $surface-muted;
+      color: $text-secondary;
+      font-weight: 600;
+      font-size: $font-size-xs;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: $spacing-3 $spacing-4;
+      border-bottom: 1px solid $border-light;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: $spacing-3 $spacing-4;
+      border-bottom: 1px solid $border-light;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #fafcff;
+    }
+
+    .app-id-tag {
+      font-family: monospace;
+      font-weight: 700;
+      color: $primary-700;
+      background: $primary-50;
+      padding: $spacing-1 $spacing-2;
+      border-radius: $radius-sm;
+      border: 1px solid $primary-200;
+      white-space: nowrap;
+    }
+
+    .applicant-primary-name {
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .applicant-address-snippet {
+      font-size: $font-size-xs;
+      color: $text-muted;
+      max-width: 220px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .contact-cell, .dob-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .contact-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: $font-size-xs;
+      color: $text-secondary;
+    }
+
+    .gender-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .coords-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: $font-size-xs;
+      font-family: monospace;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 3px 8px;
+      border-radius: $radius-sm;
+      text-decoration: none;
+      transition: all $transition-fast;
+
+      &:hover {
+        background: #d1fae5;
+        border-color: #34d399;
+      }
+    }
+
+    .no-coords {
+      color: $text-muted;
+      font-style: italic;
+    }
+
+    .status-pill {
+      display: inline-block;
+      font-size: $font-size-xs;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: $radius-full;
+      text-transform: capitalize;
+
+      &.status-submitted {
+        background: $primary-50;
+        color: $primary-700;
+        border: 1px solid $primary-200;
+      }
+
+      &.status-under_review {
+        background: $accent-amber-light;
+        color: #92400e;
+        border: 1px solid #fde68a;
+      }
+
+      &.status-verified {
+        background: $accent-emerald-light;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+      }
+
+      &.status-rejected {
+        background: $accent-rose-light;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+      }
+    }
+
+    .timestamp-cell {
+      font-size: $font-size-xs;
+      color: $text-muted;
+      white-space: nowrap;
+    }
+  }
+
+  .list-loading-state, .list-empty-state {
+    @include flex-column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-12 $spacing-6;
+    gap: $spacing-3;
+    text-align: center;
+
+    h3 {
+      font-size: $font-size-lg;
+      color: $text-primary;
+    }
+
+    p {
+      font-size: $font-size-sm;
+      color: $text-secondary;
+      max-width: 400px;
+    }
+  }
+}
+
+// Spinning Animation
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.portal-footer {
+  text-align: center;
+  padding: $spacing-6 0;
+  color: $text-muted;
+  font-size: $font-size-xs;
+  border-top: 1px solid $border-light;
+}
